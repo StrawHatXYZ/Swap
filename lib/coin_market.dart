@@ -12,6 +12,8 @@ class CoinMarket {
   }
 
   Future toUSDC(String first, String second) async {
+    print(first);
+    print(second);
     var response = await http.get(Uri.parse(
         "https://min-api.cryptocompare.com/data/pricemulti?fsyms=$first,$second&tsyms=USD,$second"));
 

@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:alert/alert.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:provider/provider.dart';
+import 'package:quickalert/models/quickalert_type.dart';
+import 'package:quickalert/widgets/quickalert_dialog.dart';
 import 'package:serumswap/acount.dart';
 import 'package:serumswap/home.dart';
 import 'package:serumswap/orderbook.dart';
@@ -10,6 +13,9 @@ import 'package:serumswap/phantom.dart';
 import 'package:serumswap/providers/wallet_state_provider.dart';
 import 'package:uni_links/uni_links.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:solana/solana.dart';
+import 'dart:convert';
+import 'package:http/http.dart';
 
 void main() {
   runApp(MaterialApp(
@@ -35,6 +41,8 @@ class _MyAppState extends State<MyApp> {
   late StreamSubscription sub;
 
   late Phantom phantom;
+
+  var data_feed = {};
 
   int selected = 0;
 
@@ -73,6 +81,7 @@ class _MyAppState extends State<MyApp> {
               setState(() {
                 provider.updateConnection(true);
               });
+              Alert(message: "phantom Connected", shortDuration: true).show();
             } else {}
             break;
           case '/disconnect':
@@ -83,11 +92,47 @@ class _MyAppState extends State<MyApp> {
           case '/signAndSendTransaction':
             var data = phantom.phantomConnect
                 .decryptPayload(data: params["data"]!, nonce: params["nonce"]!);
-            await launchUrl(
-              Uri.parse(
-                  "https://explorer.solana.com/tx/${data['signature']}?cluster=devnet"),
-              mode: LaunchMode.inAppWebView,
-            );
+            String sig = await data['signature'];
+            await Future.delayed(const Duration(seconds: 3));
+            final feed = await get(
+                    Uri.parse("https://public-api.solscan.io/transaction/$sig"))
+                .then((value) => value.body);
+            var stat = jsonDecode(feed) as Map;
+            print(stat);
+            if (stat['status'] == 'success') {
+              phantom.tswap = 1;
+              phantom.sigurl = "https://solscan.io/tx/$sig";
+              QuickAlert.show(
+                context: context,
+                type: QuickAlertType.success,
+                titleColor: Colors.white,
+                text: 'swap Completed Successfully!',
+                textColor: Colors.white,
+                backgroundColor: const Color.fromARGB(255, 68, 90, 117),
+                confirmBtnColor: Colors.blue,
+                confirmBtnText: "view on Solscan",
+                cancelBtnText: "close",
+                confirmBtnTextStyle: const TextStyle(
+                  fontSize: 13,
+                ),
+                showCancelBtn: true,
+                onCancelBtnTap: () => Navigator.pop(context),
+                onConfirmBtnTap: () async => await launchUrl(
+                    Uri.parse(phantom.sigurl),
+                    mode: LaunchMode.inAppWebView),
+              );
+            } else {
+              phantom.nswap = 1;
+              QuickAlert.show(
+                context: context,
+                type: QuickAlertType.error,
+                titleColor: Colors.white,
+                text: 'swap failed',
+                textColor: Colors.white,
+                backgroundColor: const Color.fromARGB(255, 68, 90, 117),
+                confirmBtnColor: Colors.blue,
+              );
+            }
         }
       }
     });

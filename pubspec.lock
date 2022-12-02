@@ -198,6 +198,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.7.0"
+  jupiter_aggregator:
+    dependency: "direct main"
+    description:
+      name: jupiter_aggregator
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.0"
   lints:
     dependency: transitive
     description:
@@ -307,7 +314,7 @@ packages:
       name: solana
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.26.0"
+    version: "0.26.3"
   source_span:
     dependency: transitive
     description:

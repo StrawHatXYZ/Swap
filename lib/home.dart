@@ -1,10 +1,15 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:provider/provider.dart';
+import 'package:quickalert/models/quickalert_type.dart';
+import 'package:quickalert/widgets/quickalert_dialog.dart';
 import 'package:serumswap/coin_market.dart';
 import 'package:serumswap/phantom.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:serumswap/providers/wallet_state_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Home extends StatefulWidget {
   final Phantom phantom;
@@ -44,45 +49,68 @@ class _HomeState extends State<Home> {
               "https://raw.githubusercontent.com/trustwallet/assets/f3ffd0b9ae2165336279ce2f8db1981a55ce30f8/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png"))
     },
     {
-      "label": "GDoge",
-      "value": "GDoge",
-      "address": "6SKogZxCWY9jKsKPMT3ChJUhQxAEeB6NjVidXQK6TEdW",
-      "symbol": "GDoge",
-      "tokenSymbol": "GDOGE",
-      "name": "Golden Doge Solana",
-      "decimals": 1,
+      "label": "USDT",
+      "value": "USDT",
+      "tokenSymbol": "USDT",
+      "mintAddress": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+      "tokenName": "USDT",
       "icon": SizedBox(
-        key: UniqueKey(),
-        width: 20,
-        height: 20,
-        child: Image.network(
-            "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/6SKogZxCWY9jKsKPMT3ChJUhQxAEeB6NjVidXQK6TEdW/Logo.png"),
-      )
+          key: UniqueKey(),
+          width: 20,
+          height: 20,
+          child: Image.network(
+              "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/assets/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.png"))
     },
     {
       "label": "SRM",
-      "value": "Serum",
-      "mintAddress": "SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt",
-      "tokenName": "Serum",
+      "value": "SRM",
       "tokenSymbol": "SRM",
+      "mintAddress": "SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt",
+      "tokenName": "SRM",
       "icon": SizedBox(
-        key: UniqueKey(),
-        width: 20,
-        height: 20,
-        child: Image.network(
-            "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x476c5E26a75bd202a9683ffD34359C0CC15be0fF/logo.png"),
-      )
-    }
+          key: UniqueKey(),
+          width: 20,
+          height: 20,
+          child: Image.network(
+              "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/assets/SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt/logo.png"))
+    },
+    {
+      "label": "BTC",
+      "value": "BTC",
+      "tokenSymbol": "BTC",
+      "mintAddress": "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E",
+      "tokenName": "SRM",
+      "icon": SizedBox(
+          key: UniqueKey(),
+          width: 20,
+          height: 20,
+          child: Image.network(
+              "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/assets/9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E/logo.png"))
+    },
+    {
+      "label": "ETH",
+      "value": "ETH",
+      "tokenSymbol": "ETH",
+      "mintAddress": "2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk",
+      "tokenName": "ETH",
+      "icon": SizedBox(
+          key: UniqueKey(),
+          width: 20,
+          height: 20,
+          child: Image.network(
+              "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/solana/assets/2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk/logo.png"))
+    },
   ];
   late Map<String, dynamic> price;
 
   final CoinMarket coinMarket = CoinMarket();
 
   String first = "SOL";
-  String second = "SRM";
+  String second = "USDC";
+  String mint1 = "";
+  String mint2 = "";
   Map data = {};
   double input = 0;
-
   final _firsController = TextEditingController();
   final _controller = TextEditingController();
 
@@ -197,6 +225,7 @@ class _HomeState extends State<Home> {
                                 ),
                                 DropdownButtonHideUnderline(
                                   child: DropdownButton2(
+                                    value: first,
                                     isExpanded: true,
                                     items: dropdownItemList
                                         .map((item) => DropdownMenuItem<String>(
@@ -218,7 +247,6 @@ class _HomeState extends State<Home> {
                                               ),
                                             ))
                                         .toList(),
-                                    value: first,
                                     onChanged: (value) async {
                                       setState(() {
                                         first = value as String;
@@ -482,9 +510,52 @@ class _HomeState extends State<Home> {
                 provider.isConnected
                     ? TextButton(
                         onPressed: () async {
-                          if (!widget.phantom.connected) {
-                            widget.phantom.connect();
-                          }
+                          await widget.phantom.swap(first, second, input);
+                          // if (widget.phantom.tswap == 1) {
+                          //   QuickAlert.show(
+                          //     context: context,
+                          //     type: QuickAlertType.success,
+                          //     titleColor: Colors.white,
+                          //     text: 'swap Completed Successfully!',
+                          //     textColor: Colors.white,
+                          //     backgroundColor:
+                          //         const Color.fromARGB(255, 68, 90, 117),
+                          //     confirmBtnColor: Colors.blue,
+                          //     confirmBtnText: "view on Solscan",
+                          //     onCancelBtnTap: () {},
+                          //     onConfirmBtnTap: () async => await launchUrl(
+                          //         Uri.parse(widget.phantom.sigurl),
+                          //         mode: LaunchMode.inAppWebView),
+                          //   );
+                          //   widget.phantom.tswap = 0;
+                          //   widget.phantom.nswap = 0;
+                          // }
+                          // if (widget.phantom.nswap == 1) {
+                          //   QuickAlert.show(
+                          //     context: context,
+                          //     type: QuickAlertType.error,
+                          //     titleColor: Colors.white,
+                          //     text: 'swap failed',
+                          //     textColor: Colors.white,
+                          //     backgroundColor:
+                          //         const Color.fromARGB(255, 68, 90, 117),
+                          //     confirmBtnColor: Colors.blue,
+                          //   );
+                          //   widget.phantom.tswap = 0;
+                          //   widget.phantom.nswap = 0;
+                          // }
+                          // if (await widget.phantom.swap(first, second, input)) {
+                          //   QuickAlert.show(
+                          //     context: context,
+                          //     type: QuickAlertType.success,
+                          //     titleColor: Colors.white,
+                          //     text: 'swap success',
+                          //     textColor: Colors.white,
+                          //     backgroundColor:
+                          //         const Color.fromARGB(255, 68, 90, 117),
+                          //     confirmBtnColor: Colors.blue,
+                          //   );
+                          // }
                         },
                         child: Container(
                           width: double.infinity,
